@@ -1,0 +1,28 @@
+.play-area {
+  display: grid;
+  width: 300px;
+  height: 300px;
+  grid-template-columns: auto auto auto;
+}
+
+.clear {
+  background-color: #ff0000;
+  margin-top: 20px;
+  padding: 10px;
+  border: none;
+  outline: none;
+  color: white;
+  font-weight: bold;
+  font-size: 1rem;
+  transition: 0.2s ease-out;
+}
+
+.clear:hover {
+  cursor: pointer;
+  color: black;
+  background-color: teal;
+}
+
+.player-indicator {
+  margin: 10px 0px 20px 0px;
+}

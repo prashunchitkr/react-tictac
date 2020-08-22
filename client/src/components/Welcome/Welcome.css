@@ -1,0 +1,29 @@
+.container-join {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  background-color: thistle;
+  padding: 20px;
+}
+
+.input-text {
+  padding: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  border: none;
+  outline: none;
+}
+
+.btn {
+  padding: 10px;
+  background: lightcoral;
+  color: white;
+  border: none;
+  outline: none;
+  width: 100%;
+}
+
+.btn:hover {
+  background-color: lightblue;
+  color: black;
+}

@@ -1,0 +1,45 @@
+.box {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  font-size: 3rem;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid black;
+  transition: background 0.2s ease-in-out;
+}
+
+.box:hover {
+  cursor: pointer;
+  background: yellow;
+}
+
+.occupied:hover {
+  cursor: pointer;
+  background: red;
+}
+
+#box-0,
+#box-1,
+#box-2 {
+  border-top: none;
+}
+
+#box-0,
+#box-3,
+#box-6 {
+  border-left: none;
+}
+
+#box-6,
+#box-7,
+#box-8 {
+  border-bottom: none;
+}
+
+#box-2,
+#box-5,
+#box-8 {
+  border-right: none;
+}
