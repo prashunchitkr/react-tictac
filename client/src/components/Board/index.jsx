@@ -9,7 +9,7 @@ let socket;
 const Board = () => {
   const PLAYERS = ["X", "O"];
   const [board, setBoard] = useState(Array(9).fill(""));
-  const [p1Turn, setP1Turn] = useState(
+  const [selfTurn, setSelfTurn] = useState(
     localStorage.getItem("hosted") === "true"
   );
   const [winner, setWinner] = useState(null);
@@ -30,17 +30,15 @@ const Board = () => {
     if (tempboard[pos] === "") {
       tempboard[pos] = player;
       setBoard(tempboard);
-      setP1Turn(!p1Turn);
+      setSelfTurn(!selfTurn);
       socket.emit("selfMove", { board, room });
     }
-    checkWinner();
   };
 
   const clearBoard = () => {
     setBoard(Array(9).fill(""));
-    setP1Turn(true);
     setWinner(null);
-    setP1Turn(localStorage.getItem("hosted") === "true");
+    setSelfTurn(localStorage.getItem("hosted") === "true");
     socket.emit("clearBoard", { room });
   };
 
@@ -49,8 +47,14 @@ const Board = () => {
 
     socket.emit("join", { room }, () => {});
 
-    setPlayer(p1Turn ? PLAYERS[0] : PLAYERS[1]);
-    setOpponent(p1Turn ? PLAYERS[1] : PLAYERS[0]);
+    setPlayer(selfTurn ? PLAYERS[0] : PLAYERS[1]);
+    setOpponent(selfTurn ? PLAYERS[1] : PLAYERS[0]);
+
+    socket.on("clearBoard", () => {
+      setBoard(Array(9).fill(""));
+      setWinner(null);
+      setSelfTurn(localStorage.getItem("hosted") === "true");
+    });
 
     return () => {
       socket.emit("disconnect");
@@ -61,23 +65,20 @@ const Board = () => {
   useEffect(() => {
     socket.on("opponentMove", ({ user, board }) => {
       setBoard(board);
-      if (user !== socket.id) setP1Turn(!p1Turn);
-    });
-    checkWinner();
-  }, [checkWinner]);
-
-  useEffect(() => {
-    socket.on("clearBoard", () => {
-      setBoard(Array(9).fill(""));
-      setWinner(null);
-      setP1Turn(localStorage.getItem("hosted") === "true");
+      if (user !== socket.id) {
+        setSelfTurn(true); //why dont setSelfTurn(!selfTurn) work? Why's value of selfTurn still true although react extension shwos its false?
+      }
     });
   }, []);
+
+  useEffect(() => {
+    checkWinner();
+  }, [board]);
 
   return (
     <>
       <div className="player-indicator">
-        {p1Turn ? `${player}'s Turn` : `${opponent}'s Turn`}
+        {selfTurn ? `${player}'s Turn` : `${opponent}'s Turn`}
       </div>
       <div className="play-area">
         {board.map((val, i) => (
@@ -85,7 +86,7 @@ const Board = () => {
             key={i}
             value={val}
             id={i}
-            onClick={winner || !p1Turn ? null : onClick}
+            onClick={winner || !selfTurn ? null : onClick}
           />
         ))}
       </div>
