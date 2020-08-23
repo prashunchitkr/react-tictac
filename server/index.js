@@ -54,10 +54,12 @@ io.on("connect", (socket) => {
     io.to(roomName).emit("clearBoard");
   });
 
-  socket.on("disconnect", ({ roomName }) => {
+  socket.on("disconnect", () => {
     console.log(`Bye! ${socket.id}`);
     const room = deleteRoom(socket.id);
-    io.to(room.name).emit("playerLeft");
+    if (room) {
+      io.to(room.name).emit("playerLeft");
+    }
   });
 });
 

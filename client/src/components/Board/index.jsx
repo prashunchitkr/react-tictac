@@ -50,14 +50,12 @@ const Board = () => {
     setOpponent(selfTurn ? PLAYERS[1] : PLAYERS[0]);
 
     if (localStorage.getItem("hosted") === "true") {
-      console.log("creating room...");
       socket.emit("create", { roomName }, ({ error }) => {
         alert(error);
         localStorage.setItem("roomName", "");
         history.push("/");
       });
     } else {
-      console.log("joining room...");
       socket.emit("join", { roomName }, ({ error }) => {
         alert(error);
         localStorage.setItem("roomName", "");
@@ -72,8 +70,9 @@ const Board = () => {
     });
 
     socket.on("playerLeft", () => {
-      console.log("playerleft");
       alert("Opponent Has left!");
+      socket.emit("disconnect");
+      socket.off();
       history.goBack();
     });
 
@@ -91,7 +90,7 @@ const Board = () => {
     socket.on("opponentMove", ({ user, board }) => {
       setBoard(board);
       if (user !== socket.id) {
-        setSelfTurn(true); //why dont setSelfTurn(!selfTurn) work? Why's value of selfTurn still true although react extension shwos its false?
+        setSelfTurn(true);
       }
     });
   }, []);
