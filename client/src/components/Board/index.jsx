@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useHistory } from "react-router-dom";
 import Button from "../Button";
 import { checkWin } from "../../utils";
@@ -20,48 +20,17 @@ const Board = () => {
   const ENDPOINT = "localhost:5000";
   const history = useHistory();
 
-  const checkWinner = useCallback(() => {
-    let winner = checkWin(board);
-    if (winner) {
-      setWinner(winner);
-    }
-  }, [board]);
-
-  const onClick = (pos) => {
-    let tempboard = board;
-    if (tempboard[pos] === "") {
-      tempboard[pos] = player;
-      setBoard(tempboard);
-      setSelfTurn(!selfTurn);
-      socket.emit("selfMove", { board, roomName });
-    }
-  };
-
-  const clearBoard = () => {
-    setBoard(Array(9).fill(""));
-    setWinner(null);
-    setSelfTurn(localStorage.getItem("hosted") === "true");
-    socket.emit("clearBoard", { roomName });
-  };
-
   useEffect(() => {
     socket = io(ENDPOINT);
     setPlayer(selfTurn ? PLAYERS[0] : PLAYERS[1]);
     setOpponent(selfTurn ? PLAYERS[1] : PLAYERS[0]);
 
-    if (localStorage.getItem("hosted") === "true") {
-      socket.emit("create", { roomName }, ({ error }) => {
-        alert(error);
-        localStorage.setItem("roomName", "");
-        history.push("/");
-      });
-    } else {
-      socket.emit("join", { roomName }, ({ error }) => {
-        alert(error);
-        localStorage.setItem("roomName", "");
-        history.goBack();
-      });
-    }
+    socket.on("opponentMove", ({ user, board }) => {
+      setBoard(board);
+      if (user !== socket.id) {
+        setSelfTurn(true);
+      }
+    });
 
     socket.on("clearBoard", () => {
       setBoard(Array(9).fill(""));
@@ -87,17 +56,60 @@ const Board = () => {
   }, []);
 
   useEffect(() => {
-    socket.on("opponentMove", ({ user, board }) => {
-      setBoard(board);
-      if (user !== socket.id) {
-        setSelfTurn(true);
+    if (player) {
+      if (localStorage.getItem("hosted") === "true") {
+        socket.emit("create", { roomName }, ({ error }) => {
+          if (error) {
+            alert(error);
+            localStorage.setItem("roomName", "");
+            history.goBack();
+          }
+        });
+      } else {
+        socket.emit("join", { roomName }, ({ error, board, current }) => {
+          if (error) {
+            alert(error);
+            localStorage.setItem("roomName", "");
+            history.goBack();
+          } else if (board && current) {
+            setBoard(board);
+            if (player === current) {
+              console.log("here");
+              setSelfTurn(true);
+            }
+          }
+        });
       }
-    });
-  }, []);
+    }
+  }, [player]);
 
   useEffect(() => {
     checkWinner();
   }, [board]);
+
+  const onClick = (pos) => {
+    let tempboard = board;
+    if (tempboard[pos] === "") {
+      tempboard[pos] = player;
+      setBoard(tempboard);
+      setSelfTurn(!selfTurn);
+      socket.emit("selfMove", { roomName, board });
+    }
+  };
+
+  const checkWinner = () => {
+    let winner = checkWin(board);
+    if (winner) {
+      setWinner(winner);
+    }
+  };
+
+  const clearBoard = () => {
+    setBoard(Array(9).fill(""));
+    setWinner(null);
+    setSelfTurn(localStorage.getItem("hosted") === "true");
+    socket.emit("clearBoard", { roomName });
+  };
 
   return (
     <>

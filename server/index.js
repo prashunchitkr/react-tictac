@@ -3,7 +3,7 @@ const socketio = require("socket.io");
 const http = require("http");
 const router = require("./router");
 const cors = require("cors");
-const { createRoom, joinRoom, deleteRoom } = require("./room");
+const { createRoom, joinRoom, deleteRoom, makeMove } = require("./room");
 
 const PORT = process.env.PORT || 5000;
 const app = express();
@@ -39,15 +39,23 @@ io.on("connect", (socket) => {
       return;
     }
 
-    socket.broadcast
-      .to(room.name)
-      .emit("message", { text: `${socket.id} has Joined` });
-    io.to(room.name).emit("playerJoin");
+    socket.broadcast.to(room.name).emit("playerJoin");
+
     socket.join(room.name);
+
+    callback({
+      board: room.board,
+      current: room.current,
+    });
   });
 
-  socket.on("selfMove", ({ board, roomName }) => {
-    io.to(roomName).emit("opponentMove", { user: socket.id, board });
+  socket.on("selfMove", ({ roomName, board }) => {
+    const { newBoard, current } = makeMove(roomName, board);
+    io.to(roomName).emit("opponentMove", {
+      user: socket.id,
+      board: newBoard,
+      current: current,
+    });
   });
 
   socket.on("clearBoard", ({ roomName }) => {

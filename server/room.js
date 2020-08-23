@@ -6,7 +6,12 @@ let rooms = {
 };
 
 const createRoom = (userId, roomName) => {
-  let newRoom = { name: roomName, users: [userId] };
+  let newRoom = {
+    name: roomName,
+    users: [userId],
+    board: Array(9).fill(""),
+    current: "X",
+  };
 
   if (!rooms[roomName]) {
     rooms[roomName] = newRoom;
@@ -38,4 +43,11 @@ const deleteRoom = (userId) => {
   return room;
 };
 
-module.exports = { createRoom, joinRoom, deleteRoom };
+const makeMove = (roomName, board) => {
+  const room = rooms[roomName];
+  room.board = board;
+  room.current = room.current === "X" ? "O" : "X";
+  return { newBoard: room.board, current: room.current };
+};
+
+module.exports = { createRoom, joinRoom, deleteRoom, makeMove };
