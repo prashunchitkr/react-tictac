@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useHistory } from "react-router-dom";
 import Button from "../Button";
 import { checkWin } from "../../utils";
 import io from "socket.io-client";
@@ -12,11 +13,12 @@ const Board = () => {
   const [selfTurn, setSelfTurn] = useState(
     localStorage.getItem("hosted") === "true"
   );
-  const [winner, setWinner] = useState(null);
-  const [player, setPlayer] = useState(null);
-  const [opponent, setOpponent] = useState(null);
-  const room = localStorage.getItem("roomName");
+  const [winner, setWinner] = useState("");
+  const [player, setPlayer] = useState("");
+  const [opponent, setOpponent] = useState("");
+  const roomName = localStorage.getItem("roomName");
   const ENDPOINT = "localhost:5000";
+  const history = useHistory();
 
   const checkWinner = useCallback(() => {
     let winner = checkWin(board);
@@ -31,7 +33,7 @@ const Board = () => {
       tempboard[pos] = player;
       setBoard(tempboard);
       setSelfTurn(!selfTurn);
-      socket.emit("selfMove", { board, room });
+      socket.emit("selfMove", { board, roomName });
     }
   };
 
@@ -39,21 +41,44 @@ const Board = () => {
     setBoard(Array(9).fill(""));
     setWinner(null);
     setSelfTurn(localStorage.getItem("hosted") === "true");
-    socket.emit("clearBoard", { room });
+    socket.emit("clearBoard", { roomName });
   };
 
   useEffect(() => {
     socket = io(ENDPOINT);
-
-    socket.emit("join", { room }, () => {});
-
     setPlayer(selfTurn ? PLAYERS[0] : PLAYERS[1]);
     setOpponent(selfTurn ? PLAYERS[1] : PLAYERS[0]);
+
+    if (localStorage.getItem("hosted") === "true") {
+      console.log("creating room...");
+      socket.emit("create", { roomName }, ({ error }) => {
+        alert(error);
+        localStorage.setItem("roomName", "");
+        history.push("/");
+      });
+    } else {
+      console.log("joining room...");
+      socket.emit("join", { roomName }, ({ error }) => {
+        alert(error);
+        localStorage.setItem("roomName", "");
+        history.goBack();
+      });
+    }
 
     socket.on("clearBoard", () => {
       setBoard(Array(9).fill(""));
       setWinner(null);
       setSelfTurn(localStorage.getItem("hosted") === "true");
+    });
+
+    socket.on("playerLeft", () => {
+      console.log("playerleft");
+      alert("Opponent Has left!");
+      history.goBack();
+    });
+
+    socket.on("playerJoin", () => {
+      alert("Opponent Has Joined");
     });
 
     return () => {
@@ -92,7 +117,7 @@ const Board = () => {
       </div>
       {winner ? <div className="winner">{winner} Wins!</div> : ""}
       <button className="clear" onClick={() => clearBoard()}>
-        Clear Board
+        Reset
       </button>
     </>
   );
